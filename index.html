@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thai Pulse ข่าวไทย — Adaptive News for Thai Learners</title>
+<meta name="description" content="Current Thai news adapted to your CEFR level (A1–C1) with vocabulary, readability scores, and Google Docs export.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9973A;
+    --gold-light: #F5E6C8;
+    --gold-dark: #8A6520;
+    --jade: #2D6A4F;
+    --jade-light: #D8F3DC;
+    --jade-dark: #1B4332;
+    --crimson: #A63228;
+    --cream: #FDFAF5;
+    --ink: #1C1810;
+    --muted: #7A7060;
+    --border: rgba(201,151,58,0.25);
+    --surface: rgba(253,250,245,0.97);
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Sarabun', sans-serif;
+  }
+
+  body {
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 4rem;
+  }
+
+  /* ── API KEY OVERLAY ── */
+  #apiOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28,24,16,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+  }
+
+  #apiOverlay.hidden { display: none; }
+
+  .api-card {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 2rem 1.75rem;
+    max-width: 380px;
+    width: 100%;
+    border: 0.5px solid var(--border);
+  }
+
+  .api-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--jade);
+    margin-bottom: 0.25rem;
+  }
+
+  .api-logo span { color: var(--gold); }
+
+  .api-sub {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 1.5rem;
+  }
+
+  .api-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+  }
+
+  .api-input {
+    width: 100%;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    padding: 0.65rem 0.9rem;
+    border: 0.5px solid rgba(201,151,58,0.4);
+    border-radius: 8px;
+    background: white;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    outline: none;
+    letter-spacing: 0.02em;
+  }
+
+  .api-input:focus { border-color: var(--jade); }
+
+  .api-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+
+  .api-hint a { color: var(--jade); }
+
+  .api-submit {
+    width: 100%;
+    background: var(--jade);
+    color: var(--gold-light);
+    border: none;
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s;
+  }
+
+  .api-submit:hover { background: var(--jade-dark); }
+
+  .api-note {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--jade);
+    padding: 1.25rem 1.25rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .app-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .thai-subtitle {
+    font-size: 10px;
+    color: rgba(245,230,200,0.6);
+    letter-spacing: 0.06em;
+    font-weight: 300;
+  }
+
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+  .cefr-selector {
+    display: flex;
+    gap: 3px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 20px;
+    padding: 3px;
+  }
+
+  .cefr-btn {
+    border: none;
+    background: transparent;
+    color: rgba(245,230,200,0.6);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .cefr-btn.active {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
+  .key-badge {
+    font-size: 10px;
+    color: rgba(245,230,200,0.5);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    border: 0.5px solid rgba(245,230,200,0.2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    transition: all 0.2s;
+  }
+
+  .key-badge:hover { color: rgba(245,230,200,0.9); border-color: rgba(245,230,200,0.4); }
+
+  .cefr-desc {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    font-size: 11px;
+    color: rgba(245,230,200,0.8);
+    font-weight: 300;
+    line-height: 1.4;
+  }
+
+  /* ── CATEGORY BAR ── */
+  .category-bar {
+    display: flex;
+    gap: 8px;
+    padding: 0.75rem 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface);
+  }
+
+  .category-bar::-webkit-scrollbar { display: none; }
+
+  .cat-chip {
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .cat-chip.active {
+    background: var(--gold-light);
+    border-color: var(--gold);
+    color: var(--gold-dark);
+    font-weight: 600;
+  }
+
+  /* ── FETCH BUTTON ── */
+  .fetch-btn {
+    display: block;
+    width: calc(100% - 2.5rem);
+    margin: 1rem 1.25rem 0.25rem;
+    background: var(--jade);
+    color: var(--gold-light);
+    border: none;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background 0.2s;
+  }
+
+  .fetch-btn:hover { background: var(--jade-dark); }
+  .fetch-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .status-line {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 0.25rem 1.25rem 0.75rem;
+    min-height: 1.75rem;
+    line-height: 1.5;
+  }
+
+  /* ── ARTICLE CARDS ── */
+  .article-card {
+    margin: 0 1.25rem 1.1rem;
+    background: white;
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .article-card:hover { border-color: rgba(201,151,58,0.5); }
+
+  .card-header {
+    padding: 0.9rem 1rem 0.6rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .topic-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .badge-culture   { background: #FEF3C7; color: #92400E; }
+  .badge-politics  { background: #EDE9FE; color: #4C1D95; }
+  .badge-economy   { background: #D1FAE5; color: #065F46; }
+  .badge-travel    { background: #DBEAFE; color: #1E3A5F; }
+  .badge-society   { background: #FCE7F3; color: #831843; }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .card-divider { height: 0.5px; background: var(--border); margin: 0 1rem; }
+
+  .card-body { padding: 0.75rem 1rem; }
+
+  .readability-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+  }
+
+  .rdbar-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  .rdbar-track {
+    flex: 1;
+    height: 4px;
+    background: #EEE;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .rdbar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .rdbar-score {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 26px;
+    text-align: right;
+  }
+
+  .english-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 0.75rem;
+    font-style: italic;
+  }
+
+  .thai-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.9;
+    margin-bottom: 0.75rem;
+  }
+
+  .vocab-box {
+    background: var(--jade-light);
+    border: 0.5px solid rgba(45,106,79,0.25);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .vocab-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--jade-dark);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .vocab-items { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .vocab-pill {
+    font-size: 12px;
+    background: white;
+    border: 0.5px solid rgba(45,106,79,0.2);
+    border-radius: 20px;
+    padding: 3px 10px;
+    color: var(--jade-dark);
+    cursor: default;
+    position: relative;
+  }
+
+  .vocab-pill .tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: white;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 50;
+    line-height: 1.5;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .vocab-pill:hover .tip { display: block; }
+
+  /* ── CARD ACTIONS ── */
+  .card-actions {
+    padding: 0.5rem 1rem 0.75rem;
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    flex: 1;
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 12px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .action-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold-dark);
+    background: var(--gold-light);
+  }
+
+  .action-btn.gdrive {
+    border-color: rgba(45,106,79,0.35);
+    color: var(--jade-dark);
+  }
+
+  .action-btn.gdrive:hover {
+    background: var(--jade-light);
+    border-color: var(--jade);
+  }
+
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 42px; margin-bottom: 1rem; }
+
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+  }
+
+  .empty-body { font-size: 13px; line-height: 1.65; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--jade);
+    color: var(--gold-light);
+    font-size: 13px;
+    padding: 0.7rem 1.5rem;
+    border-radius: 24px;
+    z-index: 500;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid rgba(245,230,200,0.3);
+    border-top-color: var(--gold-light);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CARD ANIMATION ── */
+  .card-enter { animation: slideIn 0.35s ease both; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── GDOCS LINK ── */
+  .gdoc-link {
+    display: block;
+    margin: 0.5rem 1rem 0.75rem;
+    font-size: 12px;
+    color: var(--jade-dark);
+    text-decoration: none;
+    background: var(--jade-light);
+    border: 0.5px solid rgba(45,106,79,0.25);
+    border-radius: 8px;
+    padding: 6px 12px;
+    text-align: center;
+    transition: background 0.2s;
+  }
+
+  .gdoc-link:hover { background: #b7e4c7; }
+</style>
+</head>
+<body>
+
+<!-- API KEY OVERLAY -->
+<div id="apiOverlay">
+  <div class="api-card">
+    <div class="api-logo">Thai Pulse <span>ข่าวไทย</span></div>
+    <div class="api-sub">ADAPTIVE NEWS FOR THAI LEARNERS</div>
+    <div class="api-label">Anthropic API Key</div>
+    <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+    <div class="api-hint">
+      Your key is stored only in your browser's local storage — it never leaves your device.
+      Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
+    </div>
+    <button class="api-submit" id="apiSubmitBtn">Enter Thai Pulse →</button>
+    <div class="api-note">Your key is never sent anywhere except Anthropic's API directly from your browser.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">Thai Pulse ข่าวไทย</div>
+      <div class="thai-subtitle">ADAPTIVE NEWS FOR THAI LEARNERS</div>
+    </div>
+    <div class="header-right">
+      <div class="cefr-selector" id="cefrSelector">
+        <button class="cefr-btn active" data-level="A1">A1</button>
+        <button class="cefr-btn" data-level="A2">A2</button>
+        <button class="cefr-btn" data-level="B1">B1</button>
+        <button class="cefr-btn" data-level="B2">B2</button>
+        <button class="cefr-btn" data-level="C1">C1</button>
+      </div>
+      <div class="key-badge" id="changeKeyBtn">⚙ API key</div>
+    </div>
+  </div>
+  <div class="cefr-desc" id="cefrDesc">A1 — Basic vocabulary only. Short, simple sentences. English gloss included.</div>
+</div>
+
+<div class="category-bar">
+  <button class="cat-chip active" data-cat="all">All Topics</button>
+  <button class="cat-chip" data-cat="culture">Culture &amp; Arts</button>
+  <button class="cat-chip" data-cat="economy">Economy</button>
+  <button class="cat-chip" data-cat="politics">Politics</button>
+  <button class="cat-chip" data-cat="travel">Travel &amp; Tourism</button>
+  <button class="cat-chip" data-cat="society">Society</button>
+</div>
+
+<button class="fetch-btn" id="fetchBtn">Fetch Latest Thai News →</button>
+<div class="status-line" id="statusLine">Select a category and fetch current stories from Thailand</div>
+
+<div id="articlesContainer">
+  <div class="empty-state">
+    <div class="empty-icon">🪷</div>
+    <div class="empty-title">สวัสดี — Welcome</div>
+    <div class="empty-body">Press <em>Fetch Latest Thai News</em> to load today's stories, adapted to your CEFR level with Thai vocabulary and Google Docs export.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const CEFR_DESCRIPTIONS = {
+  A1: "A1 — Basic vocabulary only. Short, simple sentences. English gloss included.",
+  A2: "A2 — Everyday vocabulary. Simple compound sentences. Key words glossed.",
+  B1: "B1 — Intermediate vocabulary. Varied sentence structures. Essential terms only.",
+  B2: "B2 — Upper-intermediate. Idiomatic language. Minimal glossing.",
+  C1: "C1 — Advanced vocabulary. Complex syntax. Authentic register. No glossing."
+};
+
+const CEFR_INSTRUCTIONS = {
+  A1: "3–5 very short sentences. Use only the most common Thai words (มี, ไป, มา, ดี, ใหญ่, คน, วัน, ที่). No complex grammar.",
+  A2: "5–7 sentences. Everyday vocabulary. Simple grammar patterns like subject-verb-object. Avoid complex subordinate clauses.",
+  B1: "7–9 sentences. Intermediate vocabulary. Mix simple and compound sentences. Use common connectors (แต่, และ, เพราะ, ดังนั้น).",
+  B2: "9–12 sentences. Sophisticated vocabulary. Idiomatic expressions. Passive voice. Complex sentence structures.",
+  C1: "Full paragraph of 12+ sentences. Authentic journalistic register. Advanced vocabulary. Complex syntax. Subordinate clauses. Formal collocations."
+};
+
+const CATEGORY_TOPICS = {
+  all:      "current events Thailand today",
+  culture:  "Thai culture arts festivals traditions contemporary",
+  economy:  "Thailand economy trade investment business",
+  politics: "Thailand government politics policy reforms",
+  travel:   "Thailand tourism destinations travel experiences",
+  society:  "Thai society lifestyle social issues trends"
+};
+
+const TOPIC_BADGES = {
+  culture: "badge-culture",
+  politics: "badge-politics",
+  economy: "badge-economy",
+  travel: "badge-travel",
+  society: "badge-society"
+};
+
+// ── STATE ──
+let currentLevel = "A1";
+let currentCat = "all";
+let articles = [];
+let apiKey = "";
+
+// ── INIT ──
+function init() {
+  apiKey = localStorage.getItem("thai_pulse_key") || "";
+  if (apiKey) {
+    document.getElementById("apiOverlay").classList.add("hidden");
+  }
+}
+
+// ── API KEY OVERLAY ──
+document.getElementById("apiSubmitBtn").addEventListener("click", () => {
+  const val = document.getElementById("apiKeyInput").value.trim();
+  if (!val.startsWith("sk-")) {
+    showToast("Please enter a valid Anthropic API key (starts with sk-)");
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem("thai_pulse_key", apiKey);
+  document.getElementById("apiOverlay").classList.add("hidden");
+  showToast("API key saved ✓");
+});
+
+document.getElementById("apiKeyInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("apiSubmitBtn").click();
+});
+
+document.getElementById("changeKeyBtn").addEventListener("click", () => {
+  document.getElementById("apiKeyInput").value = apiKey;
+  document.getElementById("apiOverlay").classList.remove("hidden");
+});
+
+// ── CEFR SELECTOR ──
+document.getElementById("cefrSelector").addEventListener("click", e => {
+  const btn = e.target.closest(".cefr-btn");
+  if (!btn) return;
+  document.querySelectorAll(".cefr-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentLevel = btn.dataset.level;
+  document.getElementById("cefrDesc").textContent = CEFR_DESCRIPTIONS[currentLevel];
+});
+
+// ── CATEGORY BAR ──
+document.querySelector(".category-bar").addEventListener("click", e => {
+  const chip = e.target.closest(".cat-chip");
+  if (!chip) return;
+  document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  currentCat = chip.dataset.cat;
+});
+
+// ── FETCH NEWS ──
+document.getElementById("fetchBtn").addEventListener("click", fetchNews);
+
+async function fetchNews() {
+  if (!apiKey) {
+    document.getElementById("apiOverlay").classList.remove("hidden");
+    return;
+  }
+
+  const btn = document.getElementById("fetchBtn");
+  const status = document.getElementById("statusLine");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Fetching from Thailand...';
+  status.textContent = "Searching for current stories — this may take a moment...";
+
+  const topic = CATEGORY_TOPICS[currentCat];
+  const cefrInstructions = CEFR_INSTRUCTIONS[currentLevel];
+
+  const systemPrompt = `You are a Thai language learning content creator. Search for current news from Thailand about: "${topic}". Generate 3 richly detailed, culturally authentic news summaries based on what you find.
+
+Return ONLY a valid JSON array — no markdown fences, no preamble, no trailing text. The array must contain exactly 3 objects in this format:
+[
+  {
+    "title": "Engaging English headline (max 12 words)",
+    "category": "culture|politics|economy|travel|society",
+    "english_summary": "2–3 sentence factual summary. Vivid, educational, culturally rich.",
+    "thai_text": "Thai language version at CEFR ${currentLevel}. ${cefrInstructions}",
+    "vocabulary": [
+      {"thai": "คำ", "roman": "romanization", "english": "English meaning"}
+    ],
+    "readability_pct": 75
+  }
+]
+
+For vocabulary: include 4–6 key Thai words actually used in thai_text.
+For readability_pct: integer 1–100 representing reading ease for a ${currentLevel} learner (100 = very easy for that level).
+Ensure thai_text is genuinely in Thai script, not transliterated.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2500,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: systemPrompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    let jsonText = data.content
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("");
+
+    jsonText = jsonText.replace(/```json|```/g, "").trim();
+    const s = jsonText.indexOf("[");
+    const e = jsonText.lastIndexOf("]");
+    if (s === -1 || e === -1) throw new Error("No JSON array found in response");
+
+    articles = JSON.parse(jsonText.slice(s, e + 1));
+    renderArticles(articles);
+    const now = new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+    status.textContent = `${articles.length} stories loaded · Level ${currentLevel} · ${now}`;
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    showToast("Could not fetch stories — check your API key and try again");
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = "Fetch Latest Thai News →";
+}
+
+// ── RENDER ARTICLES ──
+function renderArticles(arts) {
+  const container = document.getElementById("articlesContainer");
+  container.innerHTML = "";
+
+  arts.forEach((art, idx) => {
+    const card = document.createElement("div");
+    card.className = "article-card card-enter";
+    card.style.animationDelay = (idx * 0.1) + "s";
+    card.id = "card-" + idx;
+
+    const badgeClass = TOPIC_BADGES[art.category] || "badge-society";
+    const catLabel = (art.category || "general").charAt(0).toUpperCase() + (art.category || "general").slice(1);
+    const readPct = Math.min(100, Math.max(1, art.readability_pct || 65));
+    const readColor = readPct >= 70 ? "#2D6A4F" : readPct >= 45 ? "#C9973A" : "#A63228";
+
+    const vocabHTML = (art.vocabulary || []).map(v =>
+      `<span class="vocab-pill">${v.thai}<span class="tip">${v.roman}<br>${v.english}</span></span>`
+    ).join("");
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="topic-badge ${badgeClass}">${catLabel}</span>
+        <div class="card-title">${escHtml(art.title)}</div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-body">
+        <div class="readability-bar">
+          <span class="rdbar-label">Readability for ${currentLevel}</span>
+          <div class="rdbar-track">
+            <div class="rdbar-fill" style="width:${readPct}%;background:${readColor};"></div>
+          </div>
+          <span class="rdbar-score" style="color:${readColor};">${readPct}%</span>
+        </div>
+        <div class="english-text">${escHtml(art.english_summary)}</div>
+        <div class="thai-text">${escHtml(art.thai_text)}</div>
+        <div class="vocab-box">
+          <div class="vocab-label">Key Vocabulary — hover to see meaning</div>
+          <div class="vocab-items">${vocabHTML}</div>
+        </div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-actions">
+        <button class="action-btn" id="regen-${idx}" onclick="regenerateCard(${idx})">↺ Regenerate</button>
+        <button class="action-btn" onclick="relevelCard(${idx})">Level: ${currentLevel}</button>
+        <button class="action-btn gdrive" id="gdoc-${idx}" onclick="exportToGDocs(${idx})">→ Google Doc</button>
+      </div>
+      <div id="gdoc-link-${idx}"></div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+// ── REGENERATE SINGLE CARD ──
+async function regenerateCard(idx) {
+  if (!apiKey) return;
+  const btn = document.getElementById("regen-" + idx);
+  btn.disabled = true;
+  btn.textContent = "…";
+
+  const art = articles[idx];
+  const cefrInstructions = CEFR_INSTRUCTIONS[currentLevel];
+
+  const prompt = `Rewrite the following Thai news article at CEFR level ${currentLevel}. ${cefrInstructions}
+
+Return ONLY a single JSON object (not an array), no markdown, no preamble:
+{"title":"...","category":"${art.category}","english_summary":"...","thai_text":"...","vocabulary":[{"thai":"","roman":"","english":""}],"readability_pct":70}
+
+Original topic: ${art.title}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 900,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    let text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+    text = text.replace(/```json|```/g, "").trim();
+    const s = text.indexOf("{"), e = text.lastIndexOf("}");
+    articles[idx] = JSON.parse(text.slice(s, e + 1));
+    renderArticles(articles);
+    showToast("Story regenerated ✓");
+  } catch (err) {
+    showToast("Could not regenerate");
+    btn.disabled = false;
+    btn.textContent = "↺ Regenerate";
+  }
+}
+
+// ── RELEVEL CARD ──
+async function relevelCard(idx) {
+  const levels = ["A1","A2","B1","B2","C1"];
+  const next = levels[(levels.indexOf(currentLevel) + 1) % levels.length];
+  const art = articles[idx];
+  const cefrInstructions = CEFR_INSTRUCTIONS[next];
+
+  showToast(`Adapting to ${next}...`);
+
+  const prompt = `Rewrite this Thai news article at CEFR level ${next}. ${cefrInstructions}
+
+Return ONLY a single JSON object, no markdown:
+{"title":"${art.title}","category":"${art.category}","english_summary":"${art.english_summary}","thai_text":"...","vocabulary":[{"thai":"","roman":"","english":""}],"readability_pct":70}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 900,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    let text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+    text = text.replace(/```json|```/g, "").trim();
+    const s = text.indexOf("{"), e = text.lastIndexOf("}");
+    articles[idx] = JSON.parse(text.slice(s, e + 1));
+    currentLevel = next;
+    document.querySelectorAll(".cefr-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.level === next);
+    });
+    document.getElementById("cefrDesc").textContent = CEFR_DESCRIPTIONS[next];
+    renderArticles(articles);
+    showToast(`Adapted to ${next} ✓`);
+  } catch (err) {
+    showToast("Could not relevel");
+  }
+}
+
+// ── EXPORT TO GOOGLE DOCS ──
+async function exportToGDocs(idx) {
+  if (!apiKey) return;
+  const btn = document.getElementById("gdoc-" + idx);
+  btn.disabled = true;
+  btn.textContent = "Exporting...";
+
+  const art = articles[idx];
+  const docTitle = `Thai Pulse: ${art.title} [${currentLevel}]`;
+  const docBody = buildDocContent(art);
+
+  const prompt = `Please create a new Google Doc titled exactly: "${docTitle}"
+
+Add this content to the document:
+
+${docBody}
+
+Use the Google Drive tool to create the file. Return the document URL when done.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        mcp_servers: [{ type: "url", url: "https://drivemcp.googleapis.com/mcp/v1", name: "google-drive" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const allText = data.content.filter(b => b.type === "text").map(b => b.text).join(" ");
+    const urlMatch = allText.match(/https:\/\/docs\.google\.com\/[^\s"<>)]+/);
+
+    const linkContainer = document.getElementById("gdoc-link-" + idx);
+
+    if (urlMatch) {
+      const url = urlMatch[0];
+      linkContainer.innerHTML = `<a class="gdoc-link" href="${url}" target="_blank">✓ Open in Google Docs →</a>`;
+      showToast("Saved to Google Drive ✓");
+    } else {
+      linkContainer.innerHTML = `<a class="gdoc-link" href="https://drive.google.com" target="_blank">→ Check Google Drive</a>`;
+      showToast("Export complete — check Google Drive");
+    }
+  } catch (err) {
+    showToast("Export failed — check API key and Drive access");
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "→ Google Doc";
+}
+
+// ── BUILD DOC CONTENT ──
+function buildDocContent(art) {
+  const vocab = (art.vocabulary || [])
+    .map(v => `  • ${v.thai}  (${v.roman})  —  ${v.english}`)
+    .join("\n");
+
+  return `THAI PULSE — ADAPTIVE NEWS READER
+Generated: ${new Date().toLocaleString()}
+CEFR Level: ${currentLevel}
+Category: ${(art.category || "").toUpperCase()}
+Readability Score: ${art.readability_pct}%
+
+════════════════════════════════════════
+
+HEADLINE
+${art.title}
+
+────────────────────────────────────────
+ENGLISH SUMMARY
+${art.english_summary}
+
+────────────────────────────────────────
+THAI TEXT  (Level ${currentLevel})
+${art.thai_text}
+
+────────────────────────────────────────
+KEY VOCABULARY
+${vocab}
+
+════════════════════════════════════════
+Thai Pulse ข่าวไทย — Adaptive News for Thai Learners
+`;
+}
+
+// ── UTILITIES ──
+function escHtml(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
