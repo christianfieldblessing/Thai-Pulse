@@ -749,7 +749,7 @@ Ensure thai_text is genuinely in Thai script, not transliterated.`;
         
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 2500,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: systemPrompt }]
@@ -867,7 +867,7 @@ Original topic: ${art.title}`;
         
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 900,
         messages: [{ role: "user", content: prompt }]
       })
@@ -911,7 +911,7 @@ Return ONLY a single JSON object, no markdown:
         
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 900,
         messages: [{ role: "user", content: prompt }]
       })
@@ -963,7 +963,7 @@ Use the Google Drive tool to create the file. Return the document URL when done.
         
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1000,
         mcp_servers: [{ type: "url", url: "https://drivemcp.googleapis.com/mcp/v1", name: "google-drive" }],
         messages: [{ role: "user", content: prompt }]
