@@ -705,6 +705,7 @@ document.querySelector(".category-bar").addEventListener("click", e => {
 document.getElementById("fetchBtn").addEventListener("click", fetchNews);
 
 async function fetchNews() {
+  apiKey = localStorage.getItem("thai_pulse_key") || apiKey;
   if (!apiKey) {
     document.getElementById("apiOverlay").classList.remove("hidden");
     return;
@@ -842,6 +843,7 @@ function renderArticles(arts) {
 
 // ── REGENERATE SINGLE CARD ──
 async function regenerateCard(idx) {
+  apiKey = localStorage.getItem("thai_pulse_key") || apiKey;
   if (!apiKey) return;
   const btn = document.getElementById("regen-" + idx);
   btn.disabled = true;
@@ -936,6 +938,7 @@ Return ONLY a single JSON object, no markdown:
 
 // ── EXPORT TO GOOGLE DOCS ──
 async function exportToGDocs(idx) {
+  apiKey = localStorage.getItem("thai_pulse_key") || apiKey;
   if (!apiKey) return;
   const btn = document.getElementById("gdoc-" + idx);
   btn.disabled = true;
